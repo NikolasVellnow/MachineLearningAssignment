@@ -1,0 +1,433 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+# Report: Predicting the Quality of Biceps Curls Execution
+
+## Data Set and Question
+Here, we want to predict in which way biceps cursl can be executed wrongly, based on the data collected by movement sensors on different parts of the body. The participants were asked to perform the excercise correctly, and in four different incorrect ways. We want to predict these different ways of performing the excercise based on the movement data.
+In the following we will use three different models to predict the outcome **classe** and then combine the prediction of these models to achive a good out of sample prediction accuracy.
+
+## Loading of Packages and Data Set
+```{r}
+rm(list=ls())
+library(caret)
+
+train <- read.csv("/Users/niko/Dropbox/(Coursera) Practical Machine Learning/Week 4/pml-training.csv")
+test <- read.csv("/Users/niko/Dropbox/(Coursera) Practical Machine Learning/Week 4/pml-testing.csv")
+
+```
+## Cleaning of Data Set
+Since we want to predict for each observation we delete all summary measurements (e.g. avg, kurtosis, etc.) as well as uneccessary time information in the **train** data frame.
+```{r}
+train$X <- NULL
+train$kurtosis_roll_belt <- NULL
+train$kurtosis_picth_belt <- NULL
+train$kurtosis_yaw_belt <- NULL
+train$kurtosis_roll_arm <- NULL
+train$kurtosis_picth_arm <- NULL
+train$kurtosis_yaw_arm <- NULL
+train$kurtosis_roll_dumbbell <- NULL
+train$kurtosis_picth_dumbbell <- NULL
+train$kurtosis_yaw_dumbbell <- NULL
+train$kurtosis_roll_forearm <- NULL
+train$kurtosis_picth_forearm <- NULL
+train$kurtosis_yaw_forearm <- NULL
+
+train$skewness_roll_belt <- NULL
+train$skewness_picth_belt <- NULL
+train$skewness_yaw_belt <- NULL
+train$skewness_roll_arm <- NULL
+train$skewness_picth_arm <- NULL
+train$skewness_yaw_arm <- NULL
+train$skewness_roll_dumbbell <- NULL
+train$skewness_picth_dumbbell <- NULL
+train$skewness_yaw_dumbbell <- NULL
+train$skewness_roll_forearm <- NULL
+train$skewness_picth_forearm <- NULL
+train$skewness_yaw_forearm <- NULL
+train$skewness_roll_belt.1 <- NULL
+train$skewness_pitch_arm <- NULL
+train$skewness_pitch_dumbbell <- NULL
+train$skewness_pitch_forearm <- NULL
+
+train$avg_roll_belt <- NULL
+train$avg_picth_belt <- NULL
+train$avg_yaw_belt <- NULL
+train$avg_roll_arm <- NULL
+train$avg_picth_arm <- NULL
+train$avg_yaw_arm <- NULL
+train$avg_roll_dumbbell <- NULL
+train$avg_picth_dumbbell <- NULL
+train$avg_yaw_dumbbell <- NULL
+train$avg_roll_forearm <- NULL
+train$avg_picth_forearm <- NULL
+train$avg_yaw_forearm <- NULL
+train$avg_roll_belt.1 <- NULL
+train$avg_pitch_arm <- NULL
+train$avg_pitch_dumbbell <- NULL
+train$avg_pitch_forearm <- NULL
+train$avg_pitch_belt <- NULL
+
+train$min_roll_belt <- NULL
+train$min_picth_belt <- NULL
+train$min_yaw_belt <- NULL
+train$min_roll_arm <- NULL
+train$min_picth_arm <- NULL
+train$min_yaw_arm <- NULL
+train$min_roll_dumbbell <- NULL
+train$min_picth_dumbbell <- NULL
+train$min_yaw_dumbbell <- NULL
+train$min_roll_forearm <- NULL
+train$min_picth_forearm <- NULL
+train$min_yaw_forearm <- NULL
+train$min_roll_belt.1 <- NULL
+train$min_pitch_arm <- NULL
+train$min_pitch_dumbbell <- NULL
+train$min_pitch_forearm <- NULL
+train$min_pitch_belt <- NULL
+
+train$max_roll_belt <- NULL
+train$max_picth_belt <- NULL
+train$max_yaw_belt <- NULL
+train$max_roll_arm <- NULL
+train$max_picth_arm <- NULL
+train$max_yaw_arm <- NULL
+train$max_roll_dumbbell <- NULL
+train$max_picth_dumbbell <- NULL
+train$max_yaw_dumbbell <- NULL
+train$max_roll_forearm <- NULL
+train$max_picth_forearm <- NULL
+train$max_yaw_forearm <- NULL
+train$max_roll_belt.1 <- NULL
+train$max_pitch_arm <- NULL
+train$max_pitch_dumbbell <- NULL
+train$max_pitch_forearm <- NULL
+train$max_pitch_belt <- NULL
+
+train$amplitude_roll_belt <- NULL
+train$amplitude_picth_belt <- NULL
+train$amplitude_yaw_belt <- NULL
+train$amplitude_roll_arm <- NULL
+train$amplitude_picth_arm <- NULL
+train$amplitude_yaw_arm <- NULL
+train$amplitude_roll_dumbbell <- NULL
+train$amplitude_picth_dumbbell <- NULL
+train$amplitude_yaw_dumbbell <- NULL
+train$amplitude_roll_forearm <- NULL
+train$amplitude_picth_forearm <- NULL
+train$amplitude_yaw_forearm <- NULL
+train$amplitude_roll_belt.1 <- NULL
+train$amplitude_pitch_arm <- NULL
+train$amplitude_pitch_dumbbell <- NULL
+train$amplitude_pitch_forearm <- NULL
+train$amplitude_pitch_belt <- NULL
+
+train$var_roll_belt <- NULL
+train$var_picth_belt <- NULL
+train$var_yaw_belt <- NULL
+train$var_roll_arm <- NULL
+train$var_picth_arm <- NULL
+train$var_yaw_arm <- NULL
+train$var_roll_dumbbell <- NULL
+train$var_picth_dumbbell <- NULL
+train$var_yaw_dumbbell <- NULL
+train$var_roll_forearm <- NULL
+train$var_picth_forearm <- NULL
+train$var_yaw_forearm <- NULL
+train$var_roll_belt.1 <- NULL
+train$var_pitch_arm <- NULL
+train$var_pitch_dumbbell <- NULL
+train$var_pitch_forearm <- NULL
+train$var_pitch_belt <- NULL
+train$var_total_accel_belt <-NULL
+train$var_accel_arm <-NULL
+train$var_accel_dumbbell <-NULL
+train$var_accel_forearm <-NULL
+
+train$stddev_roll_belt <- NULL
+train$stddev_picth_belt <- NULL
+train$stddev_yaw_belt <- NULL
+train$stddev_roll_arm <- NULL
+train$stddev_picth_arm <- NULL
+train$stddev_yaw_arm <- NULL
+train$stddev_roll_dumbbell <- NULL
+train$stddev_picth_dumbbell <- NULL
+train$stddev_yaw_dumbbell <- NULL
+train$stddev_roll_forearm <- NULL
+train$stddev_picth_forearm <- NULL
+train$stddev_yaw_forearm <- NULL
+train$stddev_roll_belt.1 <- NULL
+train$stddev_pitch_arm <- NULL
+train$stddev_pitch_dumbbell <- NULL
+train$stddev_pitch_forearm <- NULL
+train$stddev_pitch_belt <- NULL
+train$stddev_total_accel_belt <-NULL
+train$stddev_accel_arm <-NULL
+train$stddev_accel_dumbbell <-NULL
+train$stddev_accel_forearm <-NULL
+train$raw_timestamp_part_1 <-NULL
+train$raw_timestamp_part_2 <-NULL
+train$cvtd_timestamp <-NULL
+train$new_window <-NULL
+```
+
+Then we do the same for the **test** data set to make them comparable.
+```{r}
+test$X <- NULL
+test$kurtosis_roll_belt <- NULL
+test$kurtosis_picth_belt <- NULL
+test$kurtosis_yaw_belt <- NULL
+test$kurtosis_roll_arm <- NULL
+test$kurtosis_picth_arm <- NULL
+test$kurtosis_yaw_arm <- NULL
+test$kurtosis_roll_dumbbell <- NULL
+test$kurtosis_picth_dumbbell <- NULL
+test$kurtosis_yaw_dumbbell <- NULL
+test$kurtosis_roll_forearm <- NULL
+test$kurtosis_picth_forearm <- NULL
+test$kurtosis_yaw_forearm <- NULL
+
+test$skewness_roll_belt <- NULL
+test$skewness_picth_belt <- NULL
+test$skewness_yaw_belt <- NULL
+test$skewness_roll_arm <- NULL
+test$skewness_picth_arm <- NULL
+test$skewness_yaw_arm <- NULL
+test$skewness_roll_dumbbell <- NULL
+test$skewness_picth_dumbbell <- NULL
+test$skewness_yaw_dumbbell <- NULL
+test$skewness_roll_forearm <- NULL
+test$skewness_picth_forearm <- NULL
+test$skewness_yaw_forearm <- NULL
+test$skewness_roll_belt.1 <- NULL
+test$skewness_pitch_arm <- NULL
+test$skewness_pitch_dumbbell <- NULL
+test$skewness_pitch_forearm <- NULL
+
+test$avg_roll_belt <- NULL
+test$avg_picth_belt <- NULL
+test$avg_yaw_belt <- NULL
+test$avg_roll_arm <- NULL
+test$avg_picth_arm <- NULL
+test$avg_yaw_arm <- NULL
+test$avg_roll_dumbbell <- NULL
+test$avg_picth_dumbbell <- NULL
+test$avg_yaw_dumbbell <- NULL
+test$avg_roll_forearm <- NULL
+test$avg_picth_forearm <- NULL
+test$avg_yaw_forearm <- NULL
+test$avg_roll_belt.1 <- NULL
+test$avg_pitch_arm <- NULL
+test$avg_pitch_dumbbell <- NULL
+test$avg_pitch_forearm <- NULL
+test$avg_pitch_belt <- NULL
+
+test$min_roll_belt <- NULL
+test$min_picth_belt <- NULL
+test$min_yaw_belt <- NULL
+test$min_roll_arm <- NULL
+test$min_picth_arm <- NULL
+test$min_yaw_arm <- NULL
+test$min_roll_dumbbell <- NULL
+test$min_picth_dumbbell <- NULL
+test$min_yaw_dumbbell <- NULL
+test$min_roll_forearm <- NULL
+test$min_picth_forearm <- NULL
+test$min_yaw_forearm <- NULL
+test$min_roll_belt.1 <- NULL
+test$min_pitch_arm <- NULL
+test$min_pitch_dumbbell <- NULL
+test$min_pitch_forearm <- NULL
+test$min_pitch_belt <- NULL
+
+test$max_roll_belt <- NULL
+test$max_picth_belt <- NULL
+test$max_yaw_belt <- NULL
+test$max_roll_arm <- NULL
+test$max_picth_arm <- NULL
+test$max_yaw_arm <- NULL
+test$max_roll_dumbbell <- NULL
+test$max_picth_dumbbell <- NULL
+test$max_yaw_dumbbell <- NULL
+test$max_roll_forearm <- NULL
+test$max_picth_forearm <- NULL
+test$max_yaw_forearm <- NULL
+test$max_roll_belt.1 <- NULL
+test$max_pitch_arm <- NULL
+test$max_pitch_dumbbell <- NULL
+test$max_pitch_forearm <- NULL
+test$max_pitch_belt <- NULL
+
+test$amplitude_roll_belt <- NULL
+test$amplitude_picth_belt <- NULL
+test$amplitude_yaw_belt <- NULL
+test$amplitude_roll_arm <- NULL
+test$amplitude_picth_arm <- NULL
+test$amplitude_yaw_arm <- NULL
+test$amplitude_roll_dumbbell <- NULL
+test$amplitude_picth_dumbbell <- NULL
+test$amplitude_yaw_dumbbell <- NULL
+test$amplitude_roll_forearm <- NULL
+test$amplitude_picth_forearm <- NULL
+test$amplitude_yaw_forearm <- NULL
+test$amplitude_roll_belt.1 <- NULL
+test$amplitude_pitch_arm <- NULL
+test$amplitude_pitch_dumbbell <- NULL
+test$amplitude_pitch_forearm <- NULL
+test$amplitude_pitch_belt <- NULL
+
+test$var_roll_belt <- NULL
+test$var_picth_belt <- NULL
+test$var_yaw_belt <- NULL
+test$var_roll_arm <- NULL
+test$var_picth_arm <- NULL
+test$var_yaw_arm <- NULL
+test$var_roll_dumbbell <- NULL
+test$var_picth_dumbbell <- NULL
+test$var_yaw_dumbbell <- NULL
+test$var_roll_forearm <- NULL
+test$var_picth_forearm <- NULL
+test$var_yaw_forearm <- NULL
+test$var_roll_belt.1 <- NULL
+test$var_pitch_arm <- NULL
+test$var_pitch_dumbbell <- NULL
+test$var_pitch_forearm <- NULL
+test$var_pitch_belt <- NULL
+test$var_total_accel_belt <-NULL
+test$var_accel_arm <-NULL
+test$var_accel_dumbbell <-NULL
+test$var_accel_forearm <-NULL
+
+test$stddev_roll_belt <- NULL
+test$stddev_picth_belt <- NULL
+test$stddev_yaw_belt <- NULL
+test$stddev_roll_arm <- NULL
+test$stddev_picth_arm <- NULL
+test$stddev_yaw_arm <- NULL
+test$stddev_roll_dumbbell <- NULL
+test$stddev_picth_dumbbell <- NULL
+test$stddev_yaw_dumbbell <- NULL
+test$stddev_roll_forearm <- NULL
+test$stddev_picth_forearm <- NULL
+test$stddev_yaw_forearm <- NULL
+test$stddev_roll_belt.1 <- NULL
+test$stddev_pitch_arm <- NULL
+test$stddev_pitch_dumbbell <- NULL
+test$stddev_pitch_forearm <- NULL
+test$stddev_pitch_belt <- NULL
+test$stddev_total_accel_belt <-NULL
+test$stddev_accel_arm <-NULL
+test$stddev_accel_dumbbell <-NULL
+test$stddev_accel_forearm <-NULL
+
+test$raw_timestamp_part_1 <-NULL
+test$raw_timestamp_part_2 <-NULL
+test$cvtd_timestamp <-NULL
+test$new_window <-NULL
+
+```
+
+## First Try
+We set the seed to get the same results when repeating code several times.
+```{r}
+set.seed(187)
+```
+Since many of the following prediction models take a lot of time to compute we first want to try a couple of things on a very small proportion of the data set, the **try** set.
+
+```{r}
+inTrain = createDataPartition(train$classe, p = 0.01)[[1]]
+try = train[ inTrain,]
+```
+Then we divide that again into a **train** and a **valid** set.
+```{r}
+inTrain = createDataPartition(try$classe, p = 0.7)[[1]]
+try.train = try[ inTrain,]
+try.valid = try[-inTrain,]
+```
+These will be too small to infer very much about the prediction accuracy but will make it possible to try out different prediction models.
+
+### Predicting with Random Forest (Using *caret*)
+```{r}
+start_time <- Sys.time()
+modRF <- train(classe~ ., data=try.train, method="rf")
+end_time <- Sys.time()
+end_time-start_time
+modRF
+
+predRF <- predict(modRF, try.valid)
+confusionMatrix(predRF, try.valid$classe)
+```
+We can see that it takes a random forest model with default settings around 21 seconds to predict already ok-ish (out of sample accuracy: 0.7193), even with such a small subset of the data.
+
+### Predicting with Gradient Boosting machine (Using *caret*)
+```{r}
+start_time <- Sys.time()
+modBoost <- train(classe~ ., data=try.train, method="gbm", verbose=F)
+end_time <- Sys.time()
+end_time-start_time
+modBoost
+
+predBoost <- predict(modBoost, try.valid)
+confusionMatrix(predBoost, try.valid$classe)
+```
+A prediction with a gradient boosting machine model needed about 19 seconds and achieved about the same level of accuracy (out of sample accuracy: 0.7018) as the random forest.
+
+### Predicting with Linear Discrimant analysis (Using *caret*)
+Let's also try a linear discrimant analysis because it is good to combine several different approaches in the end.
+```{r}
+start_time <- Sys.time()
+modLDA <- train(classe~ ., data=try.train, method="lda", preProcess=c("BoxCox","center", "scale"))
+end_time <- Sys.time()
+end_time-start_time
+modLDA
+
+predLDA <- predict(modLDA, try.valid)
+confusionMatrix(predLDA, try.valid$classe)
+```
+The linear discrimant analysis was way faster (3 seconds) and predicted comparably good (out of sample accuracy: 0.7368).
+
+
+Therefore, we can now work on the training set with the proper size.
+
+## Proper Prediction
+
+### Create Training and Validation Set
+Now we make bigger training and validation data sets to make use of the whole training data.
+```{r}
+inTrain = createDataPartition(train$classe, p = 0.7)[[1]]
+training = train[ inTrain,]
+validation = train[-inTrain,]
+dim(training)
+dim(validation)
+```
+
+
+### Predicting with Gradient Boosting Machine (Using *caret*)
+```{r}
+start_time <- Sys.time()
+modBoost <- train(classe~ ., data=training, method="gbm", verbose=F)
+end_time <- Sys.time()
+end_time-start_time
+modBoost
+
+predBoost <- predict(modBoost, validation)
+confusionMatrix(predBoost, validation$classe)
+
+```
+The gradient boosting machine model took very long but also achieved a very impressive out of sample accuracy of 0.9874.
+
+## Prediction for Test Data Set
+Now we can predict the values for the actual test set:
+```{r}
+PredictionTest <- predict(modBoost, test)
+
+testPredicted <- test
+testPredicted$predicted.classe <- PredictionTest
+testPredicted$predicted.classe
+
+```
+
+This prediction should be quite accurate since we found already very high accuracy when predicting for the validation set.
+
